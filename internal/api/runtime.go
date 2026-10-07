@@ -10,6 +10,7 @@ import (
 	stationclock "orbitlink/internal/clock"
 	"orbitlink/internal/console"
 	"orbitlink/internal/decoder"
+	"orbitlink/internal/delivery"
 	"orbitlink/internal/handover"
 	passsvc "orbitlink/internal/pass"
 	"orbitlink/internal/receiver"
@@ -49,6 +50,7 @@ type Runtime struct {
 	RecordingState   *passsvc.RecordingState
 	Handovers        *handover.Coordinator
 	Weather          *weather.Coordinator
+	Deliveries       *delivery.Service
 	sessionsMu       sync.Mutex
 	receiverSessions map[string]*receiver.Session
 }
@@ -124,6 +126,7 @@ func NewRuntime(stateRoot string) (*Runtime, error) {
 		Replanner: replanner, Extensions: extensions, Deadlines: deadlines, Unlocker: unlocker,
 		Finalizer: finalizer, Attempts: attempts, RecordingState: recordingState,
 		Handovers: handovers, Weather: weatherCoordinator, receiverSessions: make(map[string]*receiver.Session),
+		Deliveries: delivery.NewService(paths, passes, attempts, recorderManager, trail),
 	}
 	ephemerides.Subscribe(replanner.ApplyRevision)
 	if err := runtime.seed(); err != nil {

@@ -27,6 +27,10 @@ func (p Paths) Recording(id string) string {
 	return filepath.Join(p.Root, "recordings", safeName(id)+".frames")
 }
 
+func (p Paths) Delivery(name string) string {
+	return filepath.Join(p.Root, "deliveries", safeName(name)+".json")
+}
+
 func (p Paths) Validate() error {
 	if p.Root == "." || strings.TrimSpace(p.Root) == "" {
 		return fmt.Errorf("state root is required")
