@@ -27,6 +27,16 @@ func (p Paths) Recording(id string) string {
 	return filepath.Join(p.Root, "recordings", safeName(id)+".frames")
 }
 
+// Delivery is the immutable delivery report manifest for one pass.
+func (p Paths) Delivery(passID string) string {
+	return filepath.Join(p.DeliveryDir(), safeName(passID)+".json")
+}
+
+// DeliveryDir holds every immutable delivery report below the state root.
+func (p Paths) DeliveryDir() string {
+	return filepath.Join(p.Root, "deliveries")
+}
+
 func (p Paths) Validate() error {
 	if p.Root == "." || strings.TrimSpace(p.Root) == "" {
 		return fmt.Errorf("state root is required")

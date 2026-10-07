@@ -35,7 +35,8 @@ func (t *Trail) Record(event Event) (Event, error) {
 	}
 	if err := t.log.Append(store.Event{
 		ID: event.ID, Stream: "audit", Kind: event.Component + "." + event.Action,
-		At: event.At, Fields: event.Fields, Operation: event.Operation,
+		At: event.At, Severity: string(event.Severity), Subject: event.Subject,
+		Fields: event.Fields, Operation: event.Operation,
 	}); err != nil {
 		return Event{}, err
 	}

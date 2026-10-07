@@ -15,6 +15,8 @@ type Event struct {
 	Stream    string         `json:"stream"`
 	Kind      string         `json:"kind"`
 	At        time.Time      `json:"at"`
+	Severity  string         `json:"severity,omitempty"`
+	Subject   string         `json:"subject,omitempty"`
 	Fields    map[string]any `json:"fields,omitempty"`
 	Operation string         `json:"operation,omitempty"`
 }

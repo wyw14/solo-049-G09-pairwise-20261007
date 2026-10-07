@@ -59,3 +59,8 @@ func (s *Session) Status() (attemptID string, locked bool) {
 	defer s.mu.Unlock()
 	return s.current, s.locked
 }
+
+// DecoderSnapshot exposes the decoder epoch state without changing anything.
+func (s *Session) DecoderSnapshot() (attemptID string, epoch int64, lostSymbols int) {
+	return s.decoder.Snapshot()
+}

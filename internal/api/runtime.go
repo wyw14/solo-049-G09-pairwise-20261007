@@ -10,6 +10,7 @@ import (
 	stationclock "orbitlink/internal/clock"
 	"orbitlink/internal/console"
 	"orbitlink/internal/decoder"
+	"orbitlink/internal/delivery"
 	"orbitlink/internal/handover"
 	passsvc "orbitlink/internal/pass"
 	"orbitlink/internal/receiver"
@@ -49,6 +50,7 @@ type Runtime struct {
 	RecordingState   *passsvc.RecordingState
 	Handovers        *handover.Coordinator
 	Weather          *weather.Coordinator
+	Deliveries       *delivery.Service
 	sessionsMu       sync.Mutex
 	receiverSessions map[string]*receiver.Session
 }
@@ -126,6 +128,11 @@ func NewRuntime(stateRoot string) (*Runtime, error) {
 		Handovers: handovers, Weather: weatherCoordinator, receiverSessions: make(map[string]*receiver.Session),
 	}
 	ephemerides.Subscribe(replanner.ApplyRevision)
+	deliveries, err := delivery.NewService(paths, passes, attempts, recorderManager, rfController, log, trail, runtime)
+	if err != nil {
+		return nil, err
+	}
+	runtime.Deliveries = deliveries
 	if err := runtime.seed(); err != nil {
 		return nil, err
 	}
@@ -158,6 +165,24 @@ func (r *Runtime) NewDecoderSession(passID, segmentID string) (*receiver.Session
 		return nil, err
 	}
 	return receiver.NewSession(passID, decoderSession), nil
+}
+
+// DecoderSnapshot is the read-only decoder view used by delivery reports.
+func (r *Runtime) DecoderSnapshot(passID string) (attemptID string, epoch int64, lostSymbols int, found bool) {
+	r.sessionsMu.Lock()
+	session := r.receiverSessions[passID]
+	r.sessionsMu.Unlock()
+	if session != nil {
+		attemptID, epoch, lostSymbols = session.DecoderSnapshot()
+		return attemptID, epoch, lostSymbols, true
+	}
+	// Fall back to the epoch frozen onto the pass when the in-memory
+	// decoder session is gone (for example after a station restart).
+	value, exists := r.Passes.Get(passID)
+	if !exists {
+		return "", 0, 0, false
+	}
+	return value.CurrentAttemptID, value.DecoderEpoch, 0, true
 }
 
 func (r *Runtime) receiverSession(passID string) (*receiver.Session, error) {
